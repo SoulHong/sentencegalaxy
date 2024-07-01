@@ -70,6 +70,7 @@
         let lives = 5;
         let score = 0;
         let gameRunning = true;
+        let particles = [];
 
         function init() {
             selectSentence();
@@ -93,13 +94,14 @@
                 height: 40,
                 color: `hsl(${Math.random() * 360}, 50%, 50%)`,
                 hit: false,
-                vx: (Math.random() - 0.5) * 2,  // Random horizontal velocity
-                vy: (Math.random() - 0.5) * 2   // Random vertical velocity
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2
             }));
         }
 
         function updateLives() {
-            livesElement.textContent = '❤'.repeat(lives);
+            livesElement.textContent = '❤️'.repeat(lives);
+            livesElement.style.color = 'red';
         }
 
         function updateScore() {
@@ -112,6 +114,8 @@
             drawPlayer();
             updateAndDrawWords();
             updateMissile();
+            updateParticles();
+            checkCollision();
             requestAnimationFrame(gameLoop);
         }
 
@@ -145,11 +149,9 @@
         function updateAndDrawWords() {
             words.forEach(word => {
                 if (!word.hit) {
-                    // Update position
                     word.x += word.vx;
                     word.y += word.vy;
 
-                    // Bounce off walls
                     if (word.x < 0 || word.x + word.width > canvas.width) {
                         word.vx *= -1;
                     }
@@ -157,13 +159,11 @@
                         word.vy *= -1;
                     }
 
-                    // Draw word bubble
                     ctx.fillStyle = word.color;
                     ctx.beginPath();
                     ctx.ellipse(word.x + word.width / 2, word.y + word.height / 2, word.width / 2, word.height / 2, 0, 0, 2 * Math.PI);
                     ctx.fill();
 
-                    // Draw word text
                     ctx.fillStyle = 'white';
                     ctx.font = '20px Arial';
                     ctx.textAlign = 'center';
@@ -195,6 +195,7 @@
                     hitWord.hit = true;
                     score += 10;
                     updateScore();
+                    createFirework(hitWord.x + hitWord.width / 2, hitWord.y + hitWord.height / 2, hitWord.color);
                     if (words.every(w => w.hit)) {
                         score += 50;
                         updateScore();
@@ -212,6 +213,61 @@
             } else if (missile.y < 0) {
                 missile = null;
             }
+        }
+
+        function createFirework(x, y, color) {
+            for (let i = 0; i < 50; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3 + 1;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: Math.random() * 2 + 1,
+                    color: color,
+                    alpha: 1
+                });
+            }
+        }
+
+        function updateParticles() {
+            particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.02;
+
+                if (p.alpha <= 0) {
+                    particles.splice(index, 1);
+                    return;
+                }
+
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        function checkCollision() {
+            words.forEach(word => {
+                if (!word.hit && 
+                    player.x < word.x + word.width &&
+                    player.x + player.width > word.x &&
+                    player.y < word.y + word.height &&
+                    player.y + player.height > word.y) {
+                    lives--;
+                    updateLives();
+                    if (lives === 0) {
+                        gameOver();
+                    } else {
+                        // Reset player position
+                        player.x = canvas.width / 2;
+                        player.y = canvas.height - 50;
+                    }
+                }
+            });
         }
 
         function gameOver() {
