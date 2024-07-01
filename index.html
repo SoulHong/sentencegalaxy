@@ -42,7 +42,7 @@
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <canvas id="gameCanvas" width="960" height="720"></canvas>
     <div id="sentence"></div>
     <div id="lives"></div>
     <div id="score"></div>
@@ -71,10 +71,12 @@
         let score = 0;
         let gameRunning = true;
         let particles = [];
+        let stars = [];
 
         function init() {
             selectSentence();
             createWords();
+            createStars();
             updateLives();
             updateScore();
             gameLoop();
@@ -99,6 +101,17 @@
             }));
         }
 
+        function createStars() {
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 1.5,
+                    alpha: Math.random()
+                });
+            }
+        }
+
         function updateLives() {
             livesElement.textContent = '❤️'.repeat(lives);
             livesElement.style.color = 'red';
@@ -111,12 +124,24 @@
         function gameLoop() {
             if (!gameRunning) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawStars();
             drawPlayer();
             updateAndDrawWords();
             updateMissile();
             updateParticles();
             checkCollision();
             requestAnimationFrame(gameLoop);
+        }
+
+        function drawStars() {
+            ctx.save();
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+                ctx.fill();
+            });
+            ctx.restore();
         }
 
         function drawPlayer() {
