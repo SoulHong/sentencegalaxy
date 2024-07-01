@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentence Galaga</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sentence Galaga: Marshmallow Challenge</title>
     <style>
         body {
             margin: 0;
@@ -14,14 +14,17 @@
             height: 100vh;
             background-color: #000;
             font-family: Arial, sans-serif;
+            overflow: hidden;
         }
         #gameCanvas {
             border: 1px solid white;
+            max-width: 100%;
+            max-height: 100%;
         }
         #sentence, #lives, #score {
             position: absolute;
             color: white;
-            font-size: 24px;
+            font-size: 18px;
         }
         #sentence { top: 10px; left: 10px; }
         #lives { top: 10px; right: 10px; }
@@ -32,6 +35,40 @@
             font-size: 48px;
             display: none;
         }
+        #mobileControls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: none;
+        }
+        #dpad {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 150px;
+            height: 150px;
+        }
+        .dpad-button {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 25px;
+        }
+        #dpad-up { top: 0; left: 50px; }
+        #dpad-left { top: 50px; left: 0; }
+        #dpad-right { top: 50px; right: 0; }
+        #dpad-down { bottom: 0; left: 50px; }
+        #fireButton {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 80px;
+            height: 80px;
+            background-color: rgba(255, 0, 0, 0.5);
+            border-radius: 40px;
+        }
     </style>
 </head>
 <body>
@@ -40,6 +77,15 @@
     <div id="lives"></div>
     <div id="score"></div>
     <div id="gameOver">GAME OVER</div>
+    <div id="mobileControls">
+        <div id="dpad">
+            <div id="dpad-up" class="dpad-button"></div>
+            <div id="dpad-left" class="dpad-button"></div>
+            <div id="dpad-right" class="dpad-button"></div>
+            <div id="dpad-down" class="dpad-button"></div>
+        </div>
+        <div id="fireButton"></div>
+    </div>
     <audio id="backgroundMusic" loop>
         <source src="background_music.mp3" type="audio/mpeg">
     </audio>
@@ -59,13 +105,46 @@
         const backgroundMusic = document.getElementById('backgroundMusic');
         const shootSound = document.getElementById('shootSound');
         const explosionSound = document.getElementById('explosionSound');
+        const mobileControls = document.getElementById('mobileControls');
 
         const sentences = [
-            { korean: '나는 사과를 좋아한다', english: 'I like apples' },
-            { korean: '그녀는 학교에 간다', english: 'She goes to school' },
-            { korean: '우리는 공원에서 놀았다', english: 'We played in the park' },
-            { korean: '그는 책을 읽고 있다', english: 'He is reading a book' },
-            { korean: '저는 한국어를 공부합니다', english: 'I study Korean' }
+            { korean: '마시멜로 과제를 해 보세요!', english: 'Try the Marshmallow Challenge!' },
+            { korean: '각 팀은 4명입니다.', english: 'Each team has four people.' },
+            { korean: '반에서 가장 높은 탑을 만들어야 합니다.', english: 'You have to build the tallest tower in your class.' },
+            { korean: '마시멜로가 꼭대기에 있어야 합니다.', english: 'The marshmallow must be on top.' },
+            { korean: '탑은 스스로 서 있어야 합니다.', english: 'The tower must stand by itself.' },
+            { korean: '제한 시간은 15분입니다.', english: 'The time limit is 15 minutes.' },
+            { korean: '여러분은 마시멜로 과제를 어떻게 했나요?', english: 'How did you do the marshmallow challenge?' },
+            { korean: '모든 팀은 마시멜로 과제를 다르게 해요.', english: 'Every team does the marshmallow challenge differently.' },
+            { korean: '몇몇 예를 살펴봐요.', english: "Let's look at some examples." },
+            { korean: '어떤 예가 가장 마음에 드나요?', english: 'Which one do you like best?' },
+            { korean: '행동하기 전에 생각해라.', english: 'Think before you act.' },
+            { korean: '우리에게는 좋은 아이디어가 많았어요.', english: 'We had many good ideas.' },
+            { korean: '우리는 각 아이디어에 대해 자세히 이야기를 나눴어요.', english: 'We talked about each idea in detail.' },
+            { korean: '우리는 가장 좋은 아이디어를 고르는 것이 쉽지 않았어요.', english: 'It was not easy for us to choose the best idea.' },
+            { korean: '갑자기 선생님께서 "5분 남았어요."라고 말씀하셨어요.', english: 'Suddenly the teacher said, Five minutes left.' },
+            { korean: '서둘러 우리는 스파게티 면들을 테이프로 붙였어요.', english: 'In a hurry, we taped the sticks of spaghetti together.' },
+            { korean: '그러고 나서 우리는 스파게티 면을 끈으로 감았어요.', english: 'Then, we wrapped the string around them.' },
+            { korean: '끈이 테이프에 붙었고 아주 엉망진창이었어요.', english: 'The string got stuck to the tape and it was a big mess.' },
+            { korean: '1초를 남겨 놓고, 내가 마시멜로를 꼭대기에 꽂았어요!', english: 'With one second left, I put the marshmallow on top!' },
+            { korean: '그냥 해라.', english: 'Just do it.' },
+            { korean: '우리는 계획하는 데 많은 시간을 보내지 않았어요.', english: "We didn't spend much time on planning." },
+            { korean: '모든 팀원들이 바로 탑을 만들기 시작했어요.', english: 'All the members started building the tower right away.' },
+            { korean: '우리의 첫 번째 탑은 텐트 같았어요.', english: 'Our first tower looked like a tent.' },
+            { korean: '그건 그다지 높지 않았어요.', english: "It wasn't very tall." },
+            { korean: '우리는 다시 시도했어요.', english: 'We tried again.' },
+            { korean: '다음 탑은 높았지만 스스로 서 있지 못했어요.', english: "The next tower was tall but it couldn't stand by itself." },
+            { korean: '많은 시도 후에 우리는 아름답고 높은 탑을 만들 수 있었어요.', english: 'After many tries, it was possible for us to build a beautiful and tall tower.' },
+            { korean: '그것은 피사의 사탑 같았어요.', english: 'It looked like the Leaning Tower of Pisa.' },
+            { korean: '우리는 결국 우리가 원했던 것을 만들었어요!', english: 'We finally made what we wanted!' },
+            { korean: '우리는 한 팀이다.', english: "We're one team." },
+            { korean: '우리는 가장 좋은 아이디어를 고르려고 하지 않았어요.', english: "We didn't try to choose the best idea." },
+            { korean: '대신에 우리는 좋은 아이디어를 골라 발전시켰어요.', english: 'Instead, we took a good idea and improved on it.' },
+            { korean: '한 친구가 우리에겐 튼튼한 기반이 필요하다고 말했어요.', english: 'One student said we needed a strong base.' },
+            { korean: '다른 친구는 밑받침으로 삼각형 모양을 제안했어요.', english: 'Another student suggested a triangle shape for the base.' },
+            { korean: '우리 모두는 동의했고 시간 점검하는 사람과 테이프 자르는 사람과 같이 역할을 나눴어요.', english: 'We all agreed and divided up the roles such as time checker and tape cutter.' },
+            { korean: '우리는 하나의 팀으로 함께했어요.', english: 'We worked together as a team.' },
+            { korean: '마침내, 우리는 높은 탑을 만들었어요!', english: 'In the end, we built our tall tower!' }
         ];
 
         let currentSentence;
@@ -79,13 +158,64 @@
         let stars = [];
 
         function init() {
+            resizeCanvas();
             selectSentence();
             createWords();
             createStars();
             updateLives();
             updateScore();
             backgroundMusic.play();
+            if (isMobile()) {
+                mobileControls.style.display = 'block';
+                setupMobileControls();
+            }
             gameLoop();
+        }
+
+        function resizeCanvas() {
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            const scale = Math.min(screenWidth / 960, screenHeight / 720);
+            canvas.width = 960 * scale;
+            canvas.height = 720 * scale;
+            ctx.scale(scale, scale);
+        }
+
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        function setupMobileControls() {
+            const dpadButtons = document.querySelectorAll('.dpad-button');
+            dpadButtons.forEach(button => {
+                button.addEventListener('touchstart', handleDpadTouch);
+                button.addEventListener('touchend', handleDpadRelease);
+            });
+
+            const fireButton = document.getElementById('fireButton');
+            fireButton.addEventListener('touchstart', shoot);
+        }
+
+        function handleDpadTouch(event) {
+            event.preventDefault();
+            const direction = event.target.id.split('-')[1];
+            switch (direction) {
+                case 'up': player.vy = -5; break;
+                case 'down': player.vy = 5; break;
+                case 'left': player.vx = -5; break;
+                case 'right': player.vx = 5; break;
+            }
+        }
+
+        function handleDpadRelease(event) {
+            event.preventDefault();
+            const direction = event.target.id.split('-')[1];
+            switch (direction) {
+                case 'up':
+                case 'down': player.vy = 0; break;
+                case 'left':
+                case 'right': player.vx = 0; break;
+            }
         }
 
         function selectSentence() {
@@ -344,6 +474,8 @@
                     break;
             }
         });
+
+        window.addEventListener('resize', resizeCanvas);
 
         init();
     </script>
