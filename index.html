@@ -18,21 +18,14 @@
         #gameCanvas {
             border: 1px solid white;
         }
-        #sentence {
+        #sentence, #lives, #score {
             position: absolute;
-            top: 10px;
-            left: 10px;
             color: white;
             font-size: 24px;
         }
-        #lives, #score {
-            position: absolute;
-            top: 10px;
-            color: white;
-            font-size: 24px;
-        }
-        #lives { right: 10px; }
-        #score { right: 150px; }
+        #sentence { top: 10px; left: 10px; }
+        #lives { top: 10px; right: 10px; }
+        #score { top: 10px; right: 150px; }
         #gameOver {
             position: absolute;
             color: red;
@@ -47,6 +40,15 @@
     <div id="lives"></div>
     <div id="score"></div>
     <div id="gameOver">GAME OVER</div>
+    <audio id="backgroundMusic" loop>
+        <source src="background_music.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="shootSound">
+        <source src="shoot_sound.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="explosionSound">
+        <source src="explosion_sound.mp3" type="audio/mpeg">
+    </audio>
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -54,6 +56,9 @@
         const livesElement = document.getElementById('lives');
         const scoreElement = document.getElementById('score');
         const gameOverElement = document.getElementById('gameOver');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const shootSound = document.getElementById('shootSound');
+        const explosionSound = document.getElementById('explosionSound');
 
         const sentences = [
             { korean: '나는 사과를 좋아한다', english: 'I like apples' },
@@ -65,8 +70,8 @@
 
         let currentSentence;
         let words = [];
-        let player = { x: canvas.width / 2, y: canvas.height - 50, width: 40, height: 40 };
-        let missile = null;
+        let player = { x: canvas.width / 2, y: canvas.height - 50, width: 40, height: 40, vx: 0, vy: 0 };
+        let fire = null;
         let lives = 5;
         let score = 0;
         let gameRunning = true;
@@ -79,6 +84,7 @@
             createStars();
             updateLives();
             updateScore();
+            backgroundMusic.play();
             gameLoop();
         }
 
@@ -125,9 +131,10 @@
             if (!gameRunning) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawStars();
+            updatePlayer();
             drawPlayer();
             updateAndDrawWords();
-            updateMissile();
+            updateFire();
             updateParticles();
             checkCollision();
             requestAnimationFrame(gameLoop);
@@ -142,6 +149,13 @@
                 ctx.fill();
             });
             ctx.restore();
+        }
+
+        function updatePlayer() {
+            player.x += player.vx;
+            player.y += player.vy;
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
         }
 
         function drawPlayer() {
@@ -199,20 +213,27 @@
         }
 
         function shoot() {
-            if (!gameRunning || missile) return;
-            missile = { x: player.x + player.width / 2, y: player.y, width: 5, height: 10 };
+            if (!gameRunning || fire) return;
+            fire = { x: player.x + player.width / 2, y: player.y, width: 20, height: 40 };
+            shootSound.play();
         }
 
-        function updateMissile() {
-            if (!missile) return;
+        function updateFire() {
+            if (!fire) return;
 
-            missile.y -= 5;
-            ctx.fillStyle = 'yellow';
-            ctx.fillRect(missile.x, missile.y, missile.width, missile.height);
+            fire.y -= 10;
+            ctx.fillStyle = 'orange';
+            ctx.beginPath();
+            ctx.moveTo(fire.x, fire.y);
+            ctx.lineTo(fire.x - fire.width / 2, fire.y + fire.height);
+            ctx.lineTo(fire.x + fire.width / 2, fire.y + fire.height);
+            ctx.closePath();
+            ctx.fill();
 
             const hitWord = words.find(word => 
                 !word.hit &&
-                Math.sqrt((missile.x - (word.x + word.width / 2)) ** 2 + (missile.y - (word.y + word.height / 2)) ** 2) < word.width / 2
+                fire.x >= word.x && fire.x <= word.x + word.width &&
+                fire.y >= word.y && fire.y <= word.y + word.height
             );
 
             if (hitWord) {
@@ -221,6 +242,7 @@
                     score += 10;
                     updateScore();
                     createFirework(hitWord.x + hitWord.width / 2, hitWord.y + hitWord.height / 2, hitWord.color);
+                    explosionSound.play();
                     if (words.every(w => w.hit)) {
                         score += 50;
                         updateScore();
@@ -234,9 +256,9 @@
                         gameOver();
                     }
                 }
-                missile = null;
-            } else if (missile.y < 0) {
-                missile = null;
+                fire = null;
+            } else if (fire.y < 0) {
+                fire = null;
             }
         }
 
@@ -287,7 +309,6 @@
                     if (lives === 0) {
                         gameOver();
                     } else {
-                        // Reset player position
                         player.x = canvas.width / 2;
                         player.y = canvas.height - 50;
                     }
@@ -298,15 +319,29 @@
         function gameOver() {
             gameRunning = false;
             gameOverElement.style.display = 'block';
+            backgroundMusic.pause();
         }
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' && player.x > 0) {
-                player.x -= 10;
-            } else if (e.key === 'ArrowRight' && player.x < canvas.width - player.width) {
-                player.x += 10;
-            } else if (e.key === ' ') {
-                shoot();
+            switch(e.key) {
+                case 'ArrowLeft': player.vx = -5; break;
+                case 'ArrowRight': player.vx = 5; break;
+                case 'ArrowUp': player.vy = -5; break;
+                case 'ArrowDown': player.vy = 5; break;
+                case ' ': shoot(); break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch(e.key) {
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                    player.vx = 0;
+                    break;
+                case 'ArrowUp':
+                case 'ArrowDown':
+                    player.vy = 0;
+                    break;
             }
         });
 
