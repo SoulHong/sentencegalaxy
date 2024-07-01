@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentence Galaga</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            border: 1px solid white;
+        }
+        #sentence {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 24px;
+        }
+        #lives, #score {
+            position: absolute;
+            top: 10px;
+            color: white;
+            font-size: 24px;
+        }
+        #lives { right: 10px; }
+        #score { right: 150px; }
+        #gameOver {
+            position: absolute;
+            color: red;
+            font-size: 48px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="sentence"></div>
+    <div id="lives"></div>
+    <div id="score"></div>
+    <div id="gameOver">GAME OVER</div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const sentenceElement = document.getElementById('sentence');
+        const livesElement = document.getElementById('lives');
+        const scoreElement = document.getElementById('score');
+        const gameOverElement = document.getElementById('gameOver');
+
+        const sentences = [
+            { korean: '나는 사과를 좋아한다', english: 'I like apples' },
+            { korean: '그녀는 학교에 간다', english: 'She goes to school' },
+            { korean: '우리는 공원에서 놀았다', english: 'We played in the park' },
+            { korean: '그는 책을 읽고 있다', english: 'He is reading a book' },
+            { korean: '저는 한국어를 공부합니다', english: 'I study Korean' }
+        ];
+
+        let currentSentence;
+        let words = [];
+        let player = { x: canvas.width / 2, y: canvas.height - 50, width: 40, height: 40 };
+        let missile = null;
+        let lives = 5;
+        let score = 0;
+        let gameRunning = true;
+
+        function init() {
+            selectSentence();
+            createWords();
+            updateLives();
+            updateScore();
+            gameLoop();
+        }
+
+        function selectSentence() {
+            currentSentence = sentences[Math.floor(Math.random() * sentences.length)];
+            sentenceElement.textContent = currentSentence.korean;
+        }
+
+        function createWords() {
+            words = currentSentence.english.split(' ').map((word, index) => ({
+                word,
+                x: Math.random() * (canvas.width - 100) + 50,
+                y: Math.random() * (canvas.height / 2 - 100) + 100,
+                width: ctx.measureText(word).width + 20,
+                height: 40,
+                color: `hsl(${Math.random() * 360}, 50%, 50%)`,
+                hit: false,
+                vx: (Math.random() - 0.5) * 2,  // Random horizontal velocity
+                vy: (Math.random() - 0.5) * 2   // Random vertical velocity
+            }));
+        }
+
+        function updateLives() {
+            livesElement.textContent = '❤'.repeat(lives);
+        }
+
+        function updateScore() {
+            scoreElement.textContent = `Score: ${score}`;
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPlayer();
+            updateAndDrawWords();
+            updateMissile();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+            
+            ctx.fillStyle = '#4a4a4a';
+            ctx.beginPath();
+            ctx.moveTo(0, -player.height / 2);
+            ctx.lineTo(player.width / 2, player.height / 2);
+            ctx.lineTo(-player.width / 2, player.height / 2);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#7bb7e0';
+            ctx.beginPath();
+            ctx.moveTo(0, -player.height / 4);
+            ctx.lineTo(player.width / 4, player.height / 4);
+            ctx.lineTo(-player.width / 4, player.height / 4);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#ff4136';
+            ctx.fillRect(-player.width / 2, player.height / 4, player.width / 4, player.height / 4);
+            ctx.fillRect(player.width / 4, player.height / 4, player.width / 4, player.height / 4);
+
+            ctx.restore();
+        }
+
+        function updateAndDrawWords() {
+            words.forEach(word => {
+                if (!word.hit) {
+                    // Update position
+                    word.x += word.vx;
+                    word.y += word.vy;
+
+                    // Bounce off walls
+                    if (word.x < 0 || word.x + word.width > canvas.width) {
+                        word.vx *= -1;
+                    }
+                    if (word.y < 0 || word.y + word.height > canvas.height) {
+                        word.vy *= -1;
+                    }
+
+                    // Draw word bubble
+                    ctx.fillStyle = word.color;
+                    ctx.beginPath();
+                    ctx.ellipse(word.x + word.width / 2, word.y + word.height / 2, word.width / 2, word.height / 2, 0, 0, 2 * Math.PI);
+                    ctx.fill();
+
+                    // Draw word text
+                    ctx.fillStyle = 'white';
+                    ctx.font = '20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(word.word, word.x + word.width / 2, word.y + word.height / 2);
+                }
+            });
+        }
+
+        function shoot() {
+            if (!gameRunning || missile) return;
+            missile = { x: player.x + player.width / 2, y: player.y, width: 5, height: 10 };
+        }
+
+        function updateMissile() {
+            if (!missile) return;
+
+            missile.y -= 5;
+            ctx.fillStyle = 'yellow';
+            ctx.fillRect(missile.x, missile.y, missile.width, missile.height);
+
+            const hitWord = words.find(word => 
+                !word.hit &&
+                Math.sqrt((missile.x - (word.x + word.width / 2)) ** 2 + (missile.y - (word.y + word.height / 2)) ** 2) < word.width / 2
+            );
+
+            if (hitWord) {
+                if (hitWord.word === currentSentence.english.split(' ')[words.filter(w => w.hit).length]) {
+                    hitWord.hit = true;
+                    score += 10;
+                    updateScore();
+                    if (words.every(w => w.hit)) {
+                        score += 50;
+                        updateScore();
+                        selectSentence();
+                        createWords();
+                    }
+                } else {
+                    lives--;
+                    updateLives();
+                    if (lives === 0) {
+                        gameOver();
+                    }
+                }
+                missile = null;
+            } else if (missile.y < 0) {
+                missile = null;
+            }
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            gameOverElement.style.display = 'block';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && player.x > 0) {
+                player.x -= 10;
+            } else if (e.key === 'ArrowRight' && player.x < canvas.width - player.width) {
+                player.x += 10;
+            } else if (e.key === ' ') {
+                shoot();
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>
