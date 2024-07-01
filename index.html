@@ -11,20 +11,24 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            width: 100vw;
             height: 100vh;
             background-color: #000;
             font-family: Arial, sans-serif;
             overflow: hidden;
         }
         #gameCanvas {
-            border: 1px solid white;
-            max-width: 100%;
-            max-height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
         #sentence, #lives, #score {
             position: absolute;
             color: white;
             font-size: 18px;
+            z-index: 10;
         }
         #sentence { top: 10px; left: 10px; }
         #lives { top: 10px; right: 10px; }
@@ -34,6 +38,7 @@
             color: red;
             font-size: 48px;
             display: none;
+            z-index: 20;
         }
         #mobileControls {
             position: absolute;
@@ -41,6 +46,7 @@
             left: 20px;
             right: 20px;
             display: none;
+            z-index: 30;
         }
         #dpad {
             position: absolute;
@@ -72,7 +78,7 @@
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="960" height="720"></canvas>
+    <canvas id="gameCanvas"></canvas>
     <div id="sentence"></div>
     <div id="lives"></div>
     <div id="score"></div>
@@ -149,7 +155,7 @@
 
         let currentSentence;
         let words = [];
-        let player = { x: canvas.width / 2, y: canvas.height - 50, width: 40, height: 40, vx: 0, vy: 0 };
+        let player = { x: 0, y: 0, width: 40, height: 40, vx: 0, vy: 0 };
         let fire = null;
         let lives = 5;
         let score = 0;
@@ -157,28 +163,25 @@
         let particles = [];
         let stars = [];
 
-        function init() {
-            resizeCanvas();
-            selectSentence();
-            createWords();
-            createStars();
-            updateLives();
-            updateScore();
-            backgroundMusic.play();
-            if (isMobile()) {
-                mobileControls.style.display = 'block';
-                setupMobileControls();
-            }
-            gameLoop();
-        }
+        let canvasWidth = 960;
+        let canvasHeight = 720;
 
         function resizeCanvas() {
             const screenWidth = window.innerWidth;
             const screenHeight = window.innerHeight;
-            const scale = Math.min(screenWidth / 960, screenHeight / 720);
-            canvas.width = 960 * scale;
-            canvas.height = 720 * scale;
-            ctx.scale(scale, scale);
+            
+            canvas.width = screenWidth;
+            canvas.height = screenHeight;
+            
+            const scaleX = screenWidth / canvasWidth;
+            const scaleY = screenHeight / canvasHeight;
+            const scale = Math.min(scaleX, scaleY);
+            
+            ctx.setTransform(scale, 0, 0, scale, 0, 0);
+            
+            const offsetX = (screenWidth - canvasWidth * scale) / 2 / scale;
+            const offsetY = (screenHeight - canvasHeight * scale) / 2 / scale;
+            ctx.translate(offsetX, offsetY);
         }
 
         function isMobile() {
@@ -226,8 +229,8 @@
         function createWords() {
             words = currentSentence.english.split(' ').map((word, index) => ({
                 word,
-                x: Math.random() * (canvas.width - 100) + 50,
-                y: Math.random() * (canvas.height / 2 - 100) + 100,
+                x: Math.random() * (canvasWidth - 100) + 50,
+                y: Math.random() * (canvasHeight / 2 - 100) + 100,
                 width: ctx.measureText(word).width + 20,
                 height: 40,
                 color: `hsl(${Math.random() * 360}, 50%, 50%)`,
@@ -240,8 +243,8 @@
         function createStars() {
             for (let i = 0; i < 100; i++) {
                 stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
+                    x: Math.random() * canvasWidth,
+                    y: Math.random() * canvasHeight,
                     radius: Math.random() * 1.5,
                     alpha: Math.random()
                 });
@@ -259,7 +262,7 @@
 
         function gameLoop() {
             if (!gameRunning) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
             drawStars();
             updatePlayer();
             drawPlayer();
@@ -284,8 +287,8 @@
         function updatePlayer() {
             player.x += player.vx;
             player.y += player.vy;
-            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
-            player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+            player.x = Math.max(0, Math.min(canvasWidth - player.width, player.x));
+            player.y = Math.max(0, Math.min(canvasHeight - player.height, player.y));
         }
 
         function drawPlayer() {
@@ -321,10 +324,10 @@
                     word.x += word.vx;
                     word.y += word.vy;
 
-                    if (word.x < 0 || word.x + word.width > canvas.width) {
+                    if (word.x < 0 || word.x + word.width > canvasWidth) {
                         word.vx *= -1;
                     }
-                    if (word.y < 0 || word.y + word.height > canvas.height) {
+                    if (word.y < 0 || word.y + word.height > canvasHeight) {
                         word.vy *= -1;
                     }
 
@@ -439,8 +442,8 @@
                     if (lives === 0) {
                         gameOver();
                     } else {
-                        player.x = canvas.width / 2;
-                        player.y = canvas.height - 50;
+                        player.x = canvasWidth / 2;
+                        player.y = canvasHeight - 50;
                     }
                 }
             });
@@ -476,6 +479,23 @@
         });
 
         window.addEventListener('resize', resizeCanvas);
+
+        function init() {
+            resizeCanvas();
+            player.x = canvasWidth / 2 - player.width / 2;
+            player.y = canvasHeight - player.height - 10;
+            selectSentence();
+            createWords();
+            createStars();
+            updateLives();
+            updateScore();
+            backgroundMusic.play();
+            if (isMobile()) {
+                mobileControls.style.display = 'block';
+                setupMobileControls();
+            }
+            gameLoop();
+        }
 
         init();
     </script>
