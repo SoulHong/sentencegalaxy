@@ -544,6 +544,9 @@ function drawStars() {
             createStars();
             updateLives();
             updateScore();
+
+            backgroundMusic.play().catch(e => console.error("Error playing music:", e));
+
             
             spacecraftImg.onload = () => {
                 console.log("Image loaded successfully");
