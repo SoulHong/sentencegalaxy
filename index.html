@@ -92,479 +92,460 @@
         </div>
         <div id="fireButton"></div>
     </div>
-        <script>
-        console.log("Script started");
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const sentenceElement = document.getElementById('sentence');
-        const livesElement = document.getElementById('lives');
-        const scoreElement = document.getElementById('score');
-        const gameOverElement = document.getElementById('gameOver');
-        const mobileControls = document.getElementById('mobileControls');
-        
-        const backgroundMusic = new Audio('background_music.mp3');
-        backgroundMusic.loop = true;
-        const shootSound = new Audio('shoot_sound.mp3');
-        const explosionSound = new Audio('explosion_sound.mp3');
-        
-        const spacecraftImg = new Image();
-        spacecraftImg.src = 'spacecraft.png';
-        console.log("Attempting to load image from:", spacecraftImg.src);
+    <script>
+    console.log("Script started");
 
-        let assetsLoaded = 0;
-        const totalAssets = 2; // spacecraft image and background music
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const sentenceElement = document.getElementById('sentence');
+    const livesElement = document.getElementById('lives');
+    const scoreElement = document.getElementById('score');
+    const gameOverElement = document.getElementById('gameOver');
+    const mobileControls = document.getElementById('mobileControls');
 
-        function assetLoaded() {
-            assetsLoaded++;
-            if (assetsLoaded === totalAssets) {
-                console.log("All assets loaded");
-                init();
-            }
+    const backgroundMusic = new Audio('background_music.mp3');
+    backgroundMusic.loop = true;
+    const shootSound = new Audio('shoot_sound.mp3');
+    const explosionSound = new Audio('explosion_sound.mp3');
+
+    const spacecraftImg = new Image();
+    spacecraftImg.src = 'spacecraft.png';
+    console.log("Attempting to load image from:", spacecraftImg.src);
+
+    let assetsLoaded = 0;
+    const totalAssets = 2; // spacecraft image and background music
+
+    function assetLoaded() {
+        assetsLoaded++;
+        if (assetsLoaded === totalAssets) {
+            console.log("All assets loaded");
+            init();
         }
+    }
+
+    spacecraftImg.onload = () => {
+        console.log("Image loaded successfully");
+        assetLoaded();
+    };
+
+    spacecraftImg.onerror = (e) => {
+        console.error("Error loading image:", e);
+        assetLoaded(); // Continue even if image fails to load
+    };
+
+    backgroundMusic.oncanplaythrough = () => {
+        console.log("Background music loaded");
+        assetLoaded();
+    };
+
+    backgroundMusic.onerror = (e) => {
+        console.error("Error loading background music:", e);
+        assetLoaded(); // Continue even if music fails to load
+    };
+
+    const sentences = [
+        { korean: '마시멜로 과제를 해 보세요!', english: 'Try the Marshmallow Challenge!' },
+        { korean: '각 팀은 4명입니다.', english: 'Each team has four people.' },
+        { korean: '반에서 가장 높은 탑을 만들어야 합니다.', english: 'You have to build the tallest tower in your class.' },
+        { korean: '마시멜로가 꼭대기에 있어야 합니다.', english: 'The marshmallow must be on top.' },
+        { korean: '탑은 스스로 서 있어야 합니다.', english: 'The tower must stand by itself.' },
+        { korean: '제한 시간은 15분입니다.', english: 'The time limit is 15 minutes.' },
+        { korean: '여러분은 마시멜로 과제를 어떻게 했나요?', english: 'How did you do the marshmallow challenge?' },
+        { korean: '모든 팀은 마시멜로 과제를 다르게 해요.', english: 'Every team does the marshmallow challenge differently.' },
+        { korean: '몇몇 예를 살펴봐요.', english: "Let's look at some examples." },
+        { korean: '어떤 예가 가장 마음에 드나요?', english: 'Which one do you like best?' },
+        { korean: '행동하기 전에 생각해라.', english: 'Think before you act.' },
+        { korean: '우리에게는 좋은 아이디어가 많았어요.', english: 'We had many good ideas.' },
+        { korean: '우리는 각 아이디어에 대해 자세히 이야기를 나눴어요.', english: 'We talked about each idea in detail.' },
+        { korean: '우리는 가장 좋은 아이디어를 고르는 것이 쉽지 않았어요.', english: 'It was not easy for us to choose the best idea.' },
+        { korean: '갑자기 선생님께서 "5분 남았어요."라고 말씀하셨어요.', english: 'Suddenly the teacher said, Five minutes left.' },
+        { korean: '서둘러 우리는 스파게티 면들을 테이프로 붙였어요.', english: 'In a hurry, we taped the sticks of spaghetti together.' },
+        { korean: '그러고 나서 우리는 스파게티 면을 끈으로 감았어요.', english: 'Then, we wrapped the string around them.' },
+        { korean: '끈이 테이프에 붙었고 아주 엉망진창이었어요.', english: 'The string got stuck to the tape and it was a big mess.' },
+        { korean: '1초를 남겨 놓고, 내가 마시멜로를 꼭대기에 꽂았어요!', english: 'With one second left, I put the marshmallow on top!' },
+        { korean: '그냥 해라.', english: 'Just do it.' },
+        { korean: '우리는 계획하는 데 많은 시간을 보내지 않았어요.', english: "We didn't spend much time on planning." },
+        { korean: '모든 팀원들이 바로 탑을 만들기 시작했어요.', english: 'All the members started building the tower right away.' },
+        { korean: '우리의 첫 번째 탑은 텐트 같았어요.', english: 'Our first tower looked like a tent.' },
+        { korean: '그건 그다지 높지 않았어요.', english: "It wasn't very tall." },
+        { korean: '우리는 다시 시도했어요.', english: 'We tried again.' },
+        { korean: '다음 탑은 높았지만 스스로 서 있지 못했어요.', english: "The next tower was tall but it couldn't stand by itself." },
+        { korean: '많은 시도 후에 우리는 아름답고 높은 탑을 만들 수 있었어요.', english: 'After many tries, it was possible for us to build a beautiful and tall tower.' },
+        { korean: '그것은 피사의 사탑 같았어요.', english: 'It looked like the Leaning Tower of Pisa.' },
+        { korean: '우리는 결국 우리가 원했던 것을 만들었어요!', english: 'We finally made what we wanted!' },
+        { korean: '우리는 한 팀이다.', english: "We're one team." },
+        { korean: '우리는 가장 좋은 아이디어를 고르려고 하지 않았어요.', english: "We didn't try to choose the best idea." },
+        { korean: '대신에 우리는 좋은 아이디어를 골라 발전시켰어요.', english: 'Instead, we took a good idea and improved on it.' },
+        { korean: '한 친구가 우리에겐 튼튼한 기반이 필요하다고 말했어요.', english: 'One student said we needed a strong base.' },
+        { korean: '다른 친구는 밑받침으로 삼각형 모양을 제안했어요.', english: 'Another student suggested a triangle shape for the base.' },
+        { korean: '우리 모두는 동의했고 시간 점검하는 사람과 테이프 자르는 사람과 같이 역할을 나눴어요.', english: 'We all agreed and divided up the roles such as time checker and tape cutter.' },
+        { korean: '우리는 하나의 팀으로 함께했어요.', english: 'We worked together as a team.' },
+        { korean: '마침내, 우리는 높은 탑을 만들었어요!', english: 'In the end, we built our tall tower!' }
+    ];
+
+    let currentSentence;
+    let words = [];
+    let player = { x: 0, y: 0, width: 40, height: 40, vx: 0, vy: 0 };
+    let fire = null;
+    let lives = 5;
+    let score = 0;
+    let gameRunning = true;
+    let particles = [];
+    let stars = [];
+    let correctWords = [];
+
+    let canvasWidth = 960;
+    let canvasHeight = 720;
+    let isMobileDevice = false;
+
+    function resizeCanvas() {
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
         
-        spacecraftImg.onload = () => {
-            console.log("Image loaded successfully");
-            assetLoaded();
-        };
+        canvas.width = screenWidth;
+        canvas.height = screenHeight;
         
-        spacecraftImg.onerror = (e) => {
-            console.error("Error loading image:", e);
-            assetLoaded(); // Continue even if image fails to load
-        };
+        const scaleX = screenWidth / canvasWidth;
+        const scaleY = screenHeight / canvasHeight;
+        const scale = Math.min(scaleX, scaleY);
         
-        backgroundMusic.oncanplaythrough = () => {
-            console.log("Background music loaded");
-            assetLoaded();
-        };
+        ctx.setTransform(scale, 0, 0, scale, 0, 0);
         
-        backgroundMusic.onerror = (e) => {
-            console.error("Error loading background music:", e);
-            assetLoaded(); // Continue even if music fails to load
-        };
+        const offsetX = (screenWidth - canvasWidth * scale) / 2 / scale;
+        const offsetY = (screenHeight - canvasHeight * scale) / 2 / scale;
+        ctx.translate(offsetX, offsetY);
 
-
-
-        const sentences = [
-            { korean: '마시멜로 과제를 해 보세요!', english: 'Try the Marshmallow Challenge!' },
-            { korean: '각 팀은 4명입니다.', english: 'Each team has four people.' },
-            { korean: '반에서 가장 높은 탑을 만들어야 합니다.', english: 'You have to build the tallest tower in your class.' },
-            { korean: '마시멜로가 꼭대기에 있어야 합니다.', english: 'The marshmallow must be on top.' },
-            { korean: '탑은 스스로 서 있어야 합니다.', english: 'The tower must stand by itself.' },
-            { korean: '제한 시간은 15분입니다.', english: 'The time limit is 15 minutes.' },
-            { korean: '여러분은 마시멜로 과제를 어떻게 했나요?', english: 'How did you do the marshmallow challenge?' },
-            { korean: '모든 팀은 마시멜로 과제를 다르게 해요.', english: 'Every team does the marshmallow challenge differently.' },
-            { korean: '몇몇 예를 살펴봐요.', english: "Let's look at some examples." },
-            { korean: '어떤 예가 가장 마음에 드나요?', english: 'Which one do you like best?' },
-            { korean: '행동하기 전에 생각해라.', english: 'Think before you act.' },
-            { korean: '우리에게는 좋은 아이디어가 많았어요.', english: 'We had many good ideas.' },
-            { korean: '우리는 각 아이디어에 대해 자세히 이야기를 나눴어요.', english: 'We talked about each idea in detail.' },
-            { korean: '우리는 가장 좋은 아이디어를 고르는 것이 쉽지 않았어요.', english: 'It was not easy for us to choose the best idea.' },
-            { korean: '갑자기 선생님께서 "5분 남았어요."라고 말씀하셨어요.', english: 'Suddenly the teacher said, Five minutes left.' },
-            { korean: '서둘러 우리는 스파게티 면들을 테이프로 붙였어요.', english: 'In a hurry, we taped the sticks of spaghetti together.' },
-            { korean: '그러고 나서 우리는 스파게티 면을 끈으로 감았어요.', english: 'Then, we wrapped the string around them.' },
-            { korean: '끈이 테이프에 붙었고 아주 엉망진창이었어요.', english: 'The string got stuck to the tape and it was a big mess.' },
-            { korean: '1초를 남겨 놓고, 내가 마시멜로를 꼭대기에 꽂았어요!', english: 'With one second left, I put the marshmallow on top!' },
-            { korean: '그냥 해라.', english: 'Just do it.' },
-            { korean: '우리는 계획하는 데 많은 시간을 보내지 않았어요.', english: "We didn't spend much time on planning." },
-            { korean: '모든 팀원들이 바로 탑을 만들기 시작했어요.', english: 'All the members started building the tower right away.' },
-            { korean: '우리의 첫 번째 탑은 텐트 같았어요.', english: 'Our first tower looked like a tent.' },
-            { korean: '그건 그다지 높지 않았어요.', english: "It wasn't very tall." },
-            { korean: '우리는 다시 시도했어요.', english: 'We tried again.' },
-            { korean: '다음 탑은 높았지만 스스로 서 있지 못했어요.', english: "The next tower was tall but it couldn't stand by itself." },
-            { korean: '많은 시도 후에 우리는 아름답고 높은 탑을 만들 수 있었어요.', english: 'After many tries, it was possible for us to build a beautiful and tall tower.' },
-            { korean: '그것은 피사의 사탑 같았어요.', english: 'It looked like the Leaning Tower of Pisa.' },
-            { korean: '우리는 결국 우리가 원했던 것을 만들었어요!', english: 'We finally made what we wanted!' },
-            { korean: '우리는 한 팀이다.', english: "We're one team." },
-            { korean: '우리는 가장 좋은 아이디어를 고르려고 하지 않았어요.', english: "We didn't try to choose the best idea." },
-            { korean: '대신에 우리는 좋은 아이디어를 골라 발전시켰어요.', english: 'Instead, we took a good idea and improved on it.' },
-            { korean: '한 친구가 우리에겐 튼튼한 기반이 필요하다고 말했어요.', english: 'One student said we needed a strong base.' },
-            { korean: '다른 친구는 밑받침으로 삼각형 모양을 제안했어요.', english: 'Another student suggested a triangle shape for the base.' },
-            { korean: '우리 모두는 동의했고 시간 점검하는 사람과 테이프 자르는 사람과 같이 역할을 나눴어요.', english: 'We all agreed and divided up the roles such as time checker and tape cutter.' },
-            { korean: '우리는 하나의 팀으로 함께했어요.', english: 'We worked together as a team.' },
-            { korean: '마침내, 우리는 높은 탑을 만들었어요!', english: 'In the end, we built our tall tower!' }
-        ];
-
-        let currentSentence;
-        let words = [];
-        let player = { x: 0, y: 0, width: 40, height: 40, vx: 0, vy: 0 };
-        let fire = null;
-        let lives = 5;
-        let score = 0;
-        let gameRunning = true;
-        let particles = [];
-        let stars = [];
-
-        let canvasWidth = 960;
-        let canvasHeight = 720;
-        let isMobileDevice = false;
-
-        function drawPlayer() {
-            ctx.save();
-            ctx.fillStyle = 'red';  // Use a solid color instead of the image
-            ctx.fillRect(player.x, player.y, player.width, player.height);
-            ctx.restore();
-
-            // Attempt to draw the image
-            ctx.drawImage(spacecraftImg, player.x, player.y, player.width, player.height);
+        isMobileDevice = isMobile();
+        if (isMobileDevice) {
+            player.width = 80;
+            player.height = 80;
+        } else {
+            player.width = 60;
+            player.height = 60;
         }
-        
-        function resizeCanvas() {
-            const screenWidth = window.innerWidth;
-            const screenHeight = window.innerHeight;
-            
-            canvas.width = screenWidth;
-            canvas.height = screenHeight;
-            
-            const scaleX = screenWidth / canvasWidth;
-            const scaleY = screenHeight / canvasHeight;
-            const scale = Math.min(scaleX, scaleY);
-            
-            ctx.setTransform(scale, 0, 0, scale, 0, 0);
-            
-            const offsetX = (screenWidth - canvasWidth * scale) / 2 / scale;
-            const offsetY = (screenHeight - canvasHeight * scale) / 2 / scale;
-            ctx.translate(offsetX, offsetY);
+    }
+    
+    function isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
 
-            isMobileDevice = isMobile();
-            if (isMobileDevice) {
-                player.width = 80;
-                player.height = 80;
-            } else {
-                player.width = 60;
-                player.height = 60;
-            }
-        }
-        
-        function isMobile() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
+    function setupMobileControls() {
+        const dpadButtons = document.querySelectorAll('.dpad-button');
+        dpadButtons.forEach(button => {
+            button.addEventListener('touchstart', handleDpadTouch);
+            button.addEventListener('touchend', handleDpadRelease);
+        });
 
-        function setupMobileControls() {
-            const dpadButtons = document.querySelectorAll('.dpad-button');
-            dpadButtons.forEach(button => {
-                button.addEventListener('touchstart', handleDpadTouch);
-                button.addEventListener('touchend', handleDpadRelease);
+        const fireButton = document.getElementById('fireButton');
+        fireButton.addEventListener('touchstart', shoot);
+    }
+
+    function handleDpadTouch(event) {
+        event.preventDefault();
+        const direction = event.target.id.split('-')[1];
+        switch (direction) {
+            case 'up': player.vy = -5; break;
+            case 'down': player.vy = 5; break;
+            case 'left': player.vx = -5; break;
+            case 'right': player.vx = 5; break;
+        }
+    }
+
+    function handleDpadRelease(event) {
+        event.preventDefault();
+        const direction = event.target.id.split('-')[1];
+        switch (direction) {
+            case 'up':
+            case 'down': player.vy = 0; break;
+            case 'left':
+            case 'right': player.vx = 0; break;
+        }
+    }
+
+    function selectSentence() {
+        currentSentence = sentences[Math.floor(Math.random() * sentences.length)];
+        sentenceElement.textContent = currentSentence.korean;
+    }
+
+    function createWords() {
+        const fontSize = isMobileDevice ? 28 : 20;
+        ctx.font = `${fontSize}px Arial`;
+        words = currentSentence.english.split(' ').map((word, index) => ({
+            word,
+            x: Math.random() * (canvasWidth - 150) + 75,
+            y: Math.random() * (canvasHeight / 2 - 150) + 150,
+            width: ctx.measureText(word).width + 40,
+            height: 60,
+            color: `hsl(${Math.random() * 360}, 50%, 50%)`,
+            hit: false,
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2
+        }));
+    }
+
+function createStars() {
+        for (let i = 0; i < 100; i++) {
+            stars.push({
+                x: Math.random() * canvasWidth,
+                y: Math.random() * canvasHeight,
+                radius: Math.random() * 1.5,
+                alpha: Math.random()
             });
-
-            const fireButton = document.getElementById('fireButton');
-            fireButton.addEventListener('touchstart', shoot);
         }
+    }
 
-        function handleDpadTouch(event) {
-            event.preventDefault();
-            const direction = event.target.id.split('-')[1];
-            switch (direction) {
-                case 'up': player.vy = -5; break;
-                case 'down': player.vy = 5; break;
-                case 'left': player.vx = -5; break;
-                case 'right': player.vx = 5; break;
-            }
-        }
+    function updateLives() {
+        livesElement.textContent = '❤️'.repeat(lives);
+        livesElement.style.color = 'red';
+    }
 
-        function handleDpadRelease(event) {
-            event.preventDefault();
-            const direction = event.target.id.split('-')[1];
-            switch (direction) {
-                case 'up':
-                case 'down': player.vy = 0; break;
-                case 'left':
-                case 'right': player.vx = 0; break;
-            }
-        }
+    function updateScore() {
+        scoreElement.textContent = `Score: ${score}`;
+    }
 
-        function selectSentence() {
-            currentSentence = sentences[Math.floor(Math.random() * sentences.length)];
-            sentenceElement.textContent = currentSentence.korean;
-        }
+    function gameLoop() {
+        if (!gameRunning) return;
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        drawStars();
+        updatePlayer();
+        drawPlayer();
+        updateAndDrawWords();
+        updateFire();
+        updateParticles();
+        checkCollision();
+        drawCorrectWords();
+        requestAnimationFrame(gameLoop);
+    }
 
-        function createWords() {
-            const fontSize = isMobileDevice ? 28 : 20;
-            ctx.font = `${fontSize}px Arial`;
-            words = currentSentence.english.split(' ').map((word, index) => ({
-                word,
-                x: Math.random() * (canvasWidth - 150) + 75,
-                y: Math.random() * (canvasHeight / 2 - 150) + 150,
-                width: ctx.measureText(word).width + 40,
-                height: 60,
-                color: `hsl(${Math.random() * 360}, 50%, 50%)`,
-                hit: false,
-                vx: (Math.random() - 0.5) * 2,
-                vy: (Math.random() - 0.5) * 2
-            }));
-        }
-
-        function createStars() {
-            for (let i = 0; i < 100; i++) {
-                stars.push({
-                    x: Math.random() * canvasWidth,
-                    y: Math.random() * canvasHeight,
-                    radius: Math.random() * 1.5,
-                    alpha: Math.random()
-                });
-            }
-        }
-
-        function updateLives() {
-            livesElement.textContent = '❤️'.repeat(lives);
-            livesElement.style.color = 'red';
-        }
-
-        function updateScore() {
-            scoreElement.textContent = `Score: ${score}`;
-        }
-
-        function gameLoop() {
-            if (!gameRunning) return;
-            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-            drawStars();
-            updatePlayer();
-            drawPlayer();
-            updateAndDrawWords();
-            updateFire();
-            updateParticles();
-            checkCollision();
-            requestAnimationFrame(gameLoop);
-        }
-
-function drawStars() {
-            ctx.save();
-            stars.forEach(star => {
-                ctx.beginPath();
-                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
-                ctx.fill();
-            });
-            ctx.restore();
-        }
-
-        function updatePlayer() {
-            player.x += player.vx;
-            player.y += player.vy;
-            player.x = Math.max(0, Math.min(canvasWidth - player.width, player.x));
-            player.y = Math.max(0, Math.min(canvasHeight - player.height, player.y));
-        }
-
-        function drawPlayer() {
-            ctx.save();
-            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
-            
-            ctx.fillStyle = '#4a4a4a';
+    function drawStars() {
+        ctx.save();
+        stars.forEach(star => {
             ctx.beginPath();
-            ctx.moveTo(0, -player.height / 2);
-            ctx.lineTo(player.width / 2, player.height / 2);
-            ctx.lineTo(-player.width / 2, player.height / 2);
-            ctx.closePath();
+            ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
             ctx.fill();
+        });
+        ctx.restore();
+    }
 
-            ctx.fillStyle = '#7bb7e0';
-            ctx.beginPath();
-            ctx.moveTo(0, -player.height / 4);
-            ctx.lineTo(player.width / 4, player.height / 4);
-            ctx.lineTo(-player.width / 4, player.height / 4);
-            ctx.closePath();
-            ctx.fill();
+    function updatePlayer() {
+        player.x += player.vx;
+        player.y += player.vy;
+        player.x = Math.max(0, Math.min(canvasWidth - player.width, player.x));
+        player.y = Math.max(0, Math.min(canvasHeight - player.height, player.y));
+    }
 
-            ctx.fillStyle = '#ff4136';
-            ctx.fillRect(-player.width / 2, player.height / 4, player.width / 4, player.height / 4);
-            ctx.fillRect(player.width / 4, player.height / 4, player.width / 4, player.height / 4);
+    function drawPlayer() {
+        ctx.save();
+        ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+        ctx.drawImage(spacecraftImg, -player.width / 2, -player.height / 2, player.width, player.height);
+        ctx.restore();
+    }
 
-            ctx.restore();
-        }
+    function updateAndDrawWords() {
+        const fontSize = isMobileDevice ? 28 : 20;
+        words.forEach(word => {
+            if (!word.hit) {
+                word.x += word.vx;
+                word.y += word.vy;
 
-        function updateAndDrawWords() {
-            const fontSize = isMobileDevice ? 28 : 20;
-            words.forEach(word => {
-                if (!word.hit) {
-                    word.x += word.vx;
-                    word.y += word.vy;
-
-                    if (word.x < 0 || word.x + word.width > canvasWidth) {
-                        word.vx *= -1;
-                    }
-                    if (word.y < 0 || word.y + word.height > canvasHeight) {
-                        word.vy *= -1;
-                    }
-
-                    ctx.fillStyle = word.color;
-                    ctx.beginPath();
-                    ctx.ellipse(word.x + word.width / 2, word.y + word.height / 2, word.width / 2, word.height / 2, 0, 0, 2 * Math.PI);
-                    ctx.fill();
-
-                    ctx.fillStyle = 'white';
-                    ctx.font = `${fontSize}px Arial`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(word.word, word.x + word.width / 2, word.y + word.height / 2);
+                if (word.x < 0 || word.x + word.width > canvasWidth) {
+                    word.vx *= -1;
                 }
-            });
-        }
+                if (word.y < 0 || word.y + word.height > canvasHeight) {
+                    word.vy *= -1;
+                }
 
-        function shoot() {
-            if (!gameRunning || fire) return;
-            fire = { x: player.x + player.width / 2, y: player.y, width: 20, height: 40 };
-            shootSound.play().catch(e => console.error("Error playing shoot sound:", e));
-        }
+                ctx.fillStyle = word.color;
+                ctx.beginPath();
+                ctx.ellipse(word.x + word.width / 2, word.y + word.height / 2, word.width / 2, word.height / 2, 0, 0, 2 * Math.PI);
+                ctx.fill();
 
-        function updateFire() {
-            if (!fire) return;
+                ctx.fillStyle = 'white';
+                ctx.font = `${fontSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(word.word, word.x + word.width / 2, word.y + word.height / 2);
+            }
+        });
+    }
 
-            fire.y -= 10;
-            ctx.fillStyle = 'orange';
-            ctx.beginPath();
-            ctx.moveTo(fire.x, fire.y);
-            ctx.lineTo(fire.x - fire.width / 2, fire.y + fire.height);
-            ctx.lineTo(fire.x + fire.width / 2, fire.y + fire.height);
-            ctx.closePath();
-            ctx.fill();
+    function shoot() {
+        if (!gameRunning || fire) return;
+        fire = { x: player.x + player.width / 2, y: player.y, width: 20, height: 40 };
+        shootSound.play().catch(e => console.error("Error playing shoot sound:", e));
+    }
 
-            const hitWord = words.find(word => 
-                !word.hit &&
-                fire.x >= word.x && fire.x <= word.x + word.width &&
-                fire.y >= word.y && fire.y <= word.y + word.height
-            );
+    function updateFire() {
+        if (!fire) return;
 
-            if (hitWord) {
-                if (hitWord.word === currentSentence.english.split(' ')[words.filter(w => w.hit).length]) {
-                    hitWord.hit = true;
-                    score += 10;
+        fire.y -= 10;
+        ctx.fillStyle = 'orange';
+        ctx.beginPath();
+        ctx.moveTo(fire.x, fire.y);
+        ctx.lineTo(fire.x - fire.width / 2, fire.y + fire.height);
+        ctx.lineTo(fire.x + fire.width / 2, fire.y + fire.height);
+        ctx.closePath();
+        ctx.fill();
+
+        const hitWord = words.find(word => 
+            !word.hit &&
+            fire.x >= word.x && fire.x <= word.x + word.width &&
+            fire.y >= word.y && fire.y <= word.y + word.height
+        );
+
+        if (hitWord) {
+            if (hitWord.word === currentSentence.english.split(' ')[words.filter(w => w.hit).length]) {
+                hitWord.hit = true;
+                score += 10;
+                updateScore();
+                createFirework(hitWord.x + hitWord.width / 2, hitWord.y + hitWord.height / 2, hitWord.color);
+                explosionSound.play().catch(e => console.error("Error playing explosion sound:", e));
+                correctWords.push(hitWord.word);
+                if (words.every(w => w.hit)) {
+                    score += 50;
                     updateScore();
-                    createFirework(hitWord.x + hitWord.width / 2, hitWord.y + hitWord.height / 2, hitWord.color);
-                    explosionSound.play().catch(e => console.error("Error playing explosion sound:", e));
-                    if (words.every(w => w.hit)) {
-                        score += 50;
-                        updateScore();
-                        selectSentence();
-                        createWords();
-                    }
+                    selectSentence();
+                    createWords();
+                    correctWords = []; // Clear correct words for the new sentence
+                }
+            } else {
+                lives--;
+                updateLives();
+                if (lives === 0) {
+                    gameOver();
+                }
+            }
+            fire = null;
+        } else if (fire.y < 0) {
+            fire = null;
+        }
+    }
+
+    function createFirework(x, y, color) {
+        for (let i = 0; i < 50; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 3 + 1;
+            particles.push({
+                x, y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                radius: Math.random() * 2 + 1,
+                color: color,
+                alpha: 1
+            });
+        }
+    }
+
+    function updateParticles() {
+        particles.forEach((p, index) => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.alpha -= 0.02;
+
+            if (p.alpha <= 0) {
+                particles.splice(index, 1);
+                return;
+            }
+
+            ctx.globalAlpha = p.alpha;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+    }
+
+    function checkCollision() {
+        words.forEach(word => {
+            if (!word.hit && 
+                player.x < word.x + word.width &&
+                player.x + player.width > word.x &&
+                player.y < word.y + word.height &&
+                player.y + player.height > word.y) {
+                lives--;
+                updateLives();
+                if (lives === 0) {
+                    gameOver();
                 } else {
-                    lives--;
-                    updateLives();
-                    if (lives === 0) {
-                        gameOver();
-                    }
+                    player.x = canvasWidth / 2 - player.width / 2;
+                    player.y = canvasHeight - player.height - 10;
                 }
-                fire = null;
-            } else if (fire.y < 0) {
-                fire = null;
-            }
-        }
-
-        function createFirework(x, y, color) {
-            for (let i = 0; i < 50; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 3 + 1;
-                particles.push({
-                    x, y,
-                    vx: Math.cos(angle) * speed,
-                    vy: Math.sin(angle) * speed,
-                    radius: Math.random() * 2 + 1,
-                    color: color,
-                    alpha: 1
-                });
-            }
-        }
-
-        function updateParticles() {
-            particles.forEach((p, index) => {
-                p.x += p.vx;
-                p.y += p.vy;
-                p.alpha -= 0.02;
-
-                if (p.alpha <= 0) {
-                    particles.splice(index, 1);
-                    return;
-                }
-
-                ctx.globalAlpha = p.alpha;
-                ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            ctx.globalAlpha = 1;
-        }
-
-        function checkCollision() {
-            words.forEach(word => {
-                if (!word.hit && 
-                    player.x < word.x + word.width &&
-                    player.x + player.width > word.x &&
-                    player.y < word.y + word.height &&
-                    player.y + player.height > word.y) {
-                    lives--;
-                    updateLives();
-                    if (lives === 0) {
-                        gameOver();
-                    } else {
-                        player.x = canvasWidth / 2 - player.width / 2;
-                        player.y = canvasHeight - player.height - 10;
-                    }
-                }
-            });
-        }
-
-        function gameOver() {
-            gameRunning = false;
-            gameOverElement.style.display = 'block';
-            backgroundMusic.pause();
-        }
-
-        document.addEventListener('keydown', (e) => {
-            switch(e.key) {
-                case 'ArrowLeft': player.vx = -5; break;
-                case 'ArrowRight': player.vx = 5; break;
-                case 'ArrowUp': player.vy = -5; break;
-                case 'ArrowDown': player.vy = 5; break;
-                case ' ': shoot(); break;
             }
         });
+    }
 
-        document.addEventListener('keyup', (e) => {
-            switch(e.key) {
-                case 'ArrowLeft':
-                case 'ArrowRight':
-                    player.vx = 0;
-                    break;
-                case 'ArrowUp':
-                case 'ArrowDown':
-                    player.vy = 0;
-                    break;
-            }
+    function drawCorrectWords() {
+        const fontSize = isMobileDevice ? 24 : 18;
+        ctx.font = `${fontSize}px Arial`;
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        
+        const wordSpacing = 10;
+        const totalWidth = correctWords.reduce((width, word) => width + ctx.measureText(word).width + wordSpacing, 0) - wordSpacing;
+        let startX = (canvasWidth - totalWidth) / 2;
+        
+        correctWords.forEach(word => {
+            ctx.fillText(word, startX + ctx.measureText(word).width / 2, 10);
+            startX += ctx.measureText(word).width + wordSpacing;
         });
+    }
 
-        window.addEventListener('resize', resizeCanvas);
+    function gameOver() {
+        gameRunning = false;
+        gameOverElement.style.display = 'block';
+        backgroundMusic.pause();
+    }
 
-        function init() {
-            resizeCanvas();
-            isMobileDevice = isMobile();
-            player.x = canvasWidth / 2 - player.width / 2;
-            player.y = canvasHeight - player.height - 10;
-            selectSentence();
-            createWords();
-            createStars();
-            updateLives();
-            updateScore();
+    document.addEventListener('keydown', (e) => {
+        switch(e.key) {
+            case 'ArrowLeft': player.vx = -5; break;
+            case 'ArrowRight': player.vx = 5; break;
+            case 'ArrowUp': player.vy = -5; break;
+            case 'ArrowDown': player.vy = 5; break;
+            case ' ': shoot(); break;
+        }
+    });
 
-            backgroundMusic.play().catch(e => console.error("Error playing music:", e));
-            
-            spacecraftImg.onload = () => {
-                console.log("Image loaded successfully");
-                backgroundMusic.play();
-                if (isMobileDevice) {
-                    mobileControls.style.display = 'block';
-                    setupMobileControls();
-                }
-                gameLoop();
-            };
-            
-            spacecraftImg.onerror = (e) => {
-                console.error("Error loading image:", e);
-                // Start the game anyway
-                gameLoop();
-            };
-}
+    document.addEventListener('keyup', (e) => {
+        switch(e.key) {
+            case 'ArrowLeft':
+            case 'ArrowRight':
+                player.vx = 0;
+                break;
+            case 'ArrowUp':
+            case 'ArrowDown':
+                player.vy = 0;
+                break;
+        }
+    });
 
-        init();
+    window.addEventListener('resize', resizeCanvas);
+
+    function init() {
+        resizeCanvas();
+        isMobileDevice = isMobile();
+        player.x = canvasWidth / 2 - player.width / 2;
+        player.y = canvasHeight - player.height - 10;
+        selectSentence();
+        createWords();
+        createStars();
+        updateLives();
+        updateScore();
+        
+        backgroundMusic.play().catch(e => console.error("Error playing music:", e));
+        
+        if (isMobileDevice) {
+            mobileControls.style.display = 'block';
+            setupMobileControls();
+        }
+        gameLoop();
+    }
+
+    // Start loading assets
+    assetLoaded();
     </script>
 </body>
 </html>
