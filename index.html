@@ -112,6 +112,7 @@
     const shootSound = new Audio('shoot_sound.mp3');
     const explosionSound = new Audio('explosion_sound.mp3');
     let ouchSound;
+    let ehSound;
         
     const spacecraftImg = new Image();
     spacecraftImg.src = 'spacecraft_n.png';
@@ -132,7 +133,20 @@
         ouchSound = new Audio('ouch.mp3');
         ouchSound.load();
         console.log("Ouch sound initialized");
+    
+        ehSound = new Audio('eh.mp3');
+        ehSound.load();
+        console.log("Eh sound initialized");
     }
+
+    function playEhSound() {
+    if (ehSound && ehSound.readyState >= 2) {  // HAVE_CURRENT_DATA or higher
+        ehSound.currentTime = 0;
+        ehSound.play().catch(e => console.error("Error playing eh sound:", e));
+    } else {
+        console.warn("Eh sound not ready yet");
+    }
+        }
 
     spacecraftImg.onload = () => {
         console.log("Image loaded successfully");
@@ -161,6 +175,9 @@
         
         const ouchSource = audioContext.createMediaElementSource(ouchSound);
         ouchSource.connect(audioContext.destination);
+    
+        const ehSource = audioContext.createMediaElementSource(ehSound);
+        ehSource.connect(audioContext.destination);
     }
 
     function playBackgroundMusic() {
@@ -425,7 +442,7 @@ function createWords() {
         
     function updateFire() {
         if (!fire) return;
-
+    
         fire.y -= 10;
         ctx.fillStyle = 'orange';
         ctx.beginPath();
@@ -434,13 +451,13 @@ function createWords() {
         ctx.lineTo(fire.x + fire.width / 2, fire.y + fire.height);
         ctx.closePath();
         ctx.fill();
-
+    
         const hitWord = words.find(word => 
             !word.hit &&
             fire.x >= word.x && fire.x <= word.x + word.width &&
             fire.y >= word.y && fire.y <= word.y + word.height
         );
-
+    
         if (hitWord) {
             if (hitWord.word === currentSentence.english.split(' ')[words.filter(w => w.hit).length]) {
                 hitWord.hit = true;
@@ -457,6 +474,7 @@ function createWords() {
                     correctWords = []; // Clear correct words for the new sentence
                 }
             } else {
+                playEhSound();  // Play 'eh' sound for wrong bubble
                 lives--;
                 updateLives();
                 if (lives === 0) {
