@@ -513,16 +513,20 @@ function drawStars() {
             updateLives();
             updateScore();
             
-            // Wait for the image to load before starting the game
-            spacecraftImg.onload = () => {
-                backgroundMusic.play();
-                if (isMobileDevice) {
-                    mobileControls.style.display = 'block';
-                    setupMobileControls();
-                }
-                gameLoop();
-            };
-        }
+        spacecraftImg.onload = () => {
+            backgroundMusic.play();
+            if (isMobileDevice) {
+                mobileControls.style.display = 'block';
+                setupMobileControls();
+            }
+            gameLoop();
+        };
+        spacecraftImg.onerror = () => {
+            console.error("Failed to load spacecraft image");
+            // Start the game anyway or show an error message
+            gameLoop();
+        };
+}
 
         init();
     </script>
