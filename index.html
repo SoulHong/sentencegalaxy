@@ -112,6 +112,7 @@
         const shootSound = document.getElementById('shootSound');
         const explosionSound = document.getElementById('explosionSound');
         const mobileControls = document.getElementById('mobileControls');
+        const spacecraftImg = document.getElementById('spacecraftImg');
 
         const sentences = [
             { korean: '마시멜로 과제를 해 보세요!', english: 'Try the Marshmallow Challenge!' },
@@ -167,6 +168,13 @@
         let canvasHeight = 720;
         let isMobileDevice = false;
 
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.drawImage(spacecraftImg, 0, 0, player.width, player.height);
+            ctx.restore();
+        }
+        
         function resizeCanvas() {
             const screenWidth = window.innerWidth;
             const screenHeight = window.innerHeight;
@@ -186,14 +194,14 @@
 
             isMobileDevice = isMobile();
             if (isMobileDevice) {
+                player.width = 80;
+                player.height = 80;
+            } else {
                 player.width = 60;
                 player.height = 60;
-            } else {
-                player.width = 40;
-                player.height = 40;
             }
         }
-
+        
         function isMobile() {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         }
@@ -503,12 +511,16 @@ function drawStars() {
             createStars();
             updateLives();
             updateScore();
-            backgroundMusic.play();
-            if (isMobileDevice) {
-                mobileControls.style.display = 'block';
-                setupMobileControls();
-            }
-            gameLoop();
+            
+            // Wait for the image to load before starting the game
+            spacecraftImg.onload = () => {
+                backgroundMusic.play();
+                if (isMobileDevice) {
+                    mobileControls.style.display = 'block';
+                    setupMobileControls();
+                }
+                gameLoop();
+            };
         }
 
         init();
