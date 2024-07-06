@@ -111,7 +111,7 @@
     backgroundMusic.loop = true;
     const shootSound = new Audio('shoot_sound.mp3');
     const explosionSound = new Audio('explosion_sound.mp3');
-    const ouchSound = new Audio('ouch.mp3');
+    let ouchSound;
     ouchSound.preload = 'auto';
 
     const spacecraftImg = new Image();
@@ -147,16 +147,6 @@
     backgroundMusic.onerror = (e) => {
         console.error("Error loading background music:", e);
         assetLoaded(); // Continue even if music fails to load
-    };
-
-    ouchSound.oncanplaythrough = () => {
-    console.log("Ouch sound loaded");
-    assetLoaded();
-    };
-    
-    ouchSound.onerror = (e) => {
-        console.error("Error loading ouch sound:", e);
-        assetLoaded(); // Continue even if sound fails to load
     };
 
     function initAudio() {
@@ -518,6 +508,7 @@ function createWords() {
                 player.y + player.height > word.y) {
                 lives--;
                 updateLives();
+                playOuchSound();  // Play the ouch sound here
                 if (lives === 0) {
                     gameOver();
                 } else {
@@ -576,7 +567,7 @@ function createWords() {
 
     window.addEventListener('resize', resizeCanvas);
 
-    function init() {
+    async function init() {
         resizeCanvas();
         isMobileDevice = isMobile();
         player.x = canvasWidth / 2 - player.width / 2;
@@ -586,6 +577,13 @@ function createWords() {
         createStars();
         updateLives();
         updateScore();
+        
+        try {
+            await loadSound();
+            console.log("Ouch sound loaded successfully");
+        } catch (e) {
+            console.error("Failed to load ouch sound:", e);
+        }
         
         document.addEventListener('click', startGame, { once: true });
         
