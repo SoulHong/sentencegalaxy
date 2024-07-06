@@ -92,7 +92,6 @@
         </div>
         <div id="fireButton"></div>
     </div>
-    <img id="spacecraftImg" src="./spacecraft.png" style="display: none;">
     <audio id="backgroundMusic" loop>
         <source src="background_music.mp3" type="audio/mpeg">
     </audio>
@@ -103,6 +102,7 @@
         <source src="explosion_sound.mp3" type="audio/mpeg">
     </audio>
     <script>
+        console.log("Script started");
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const sentenceElement = document.getElementById('sentence');
@@ -113,7 +113,9 @@
         const shootSound = document.getElementById('shootSound');
         const explosionSound = document.getElementById('explosionSound');
         const mobileControls = document.getElementById('mobileControls');
-        const spacecraftImg = document.getElementById('spacecraftImg');
+        const spacecraftImg = new Image();
+        spacecraftImg.src = 'spacecraft.png';
+        console.log("Attempting to load image from:", spacecraftImg.src);
 
         const sentences = [
             { korean: '마시멜로 과제를 해 보세요!', english: 'Try the Marshmallow Challenge!' },
@@ -171,9 +173,12 @@
 
         function drawPlayer() {
             ctx.save();
-            ctx.translate(player.x, player.y);
-            ctx.drawImage(spacecraftImg, 0, 0, player.width, player.height);
+            ctx.fillStyle = 'red';  // Use a solid color instead of the image
+            ctx.fillRect(player.x, player.y, player.width, player.height);
             ctx.restore();
+
+            // Attempt to draw the image
+            ctx.drawImage(spacecraftImg, player.x, player.y, player.width, player.height);
         }
         
         function resizeCanvas() {
@@ -513,19 +518,21 @@ function drawStars() {
             updateLives();
             updateScore();
             
-        spacecraftImg.onload = () => {
-            backgroundMusic.play();
-            if (isMobileDevice) {
-                mobileControls.style.display = 'block';
-                setupMobileControls();
-            }
-            gameLoop();
-        };
-        spacecraftImg.onerror = () => {
-            console.error("Failed to load spacecraft image");
-            // Start the game anyway or show an error message
-            gameLoop();
-        };
+            spacecraftImg.onload = () => {
+                console.log("Image loaded successfully");
+                backgroundMusic.play();
+                if (isMobileDevice) {
+                    mobileControls.style.display = 'block';
+                    setupMobileControls();
+                }
+                gameLoop();
+            };
+            
+            spacecraftImg.onerror = (e) => {
+                console.error("Error loading image:", e);
+                // Start the game anyway
+                gameLoop();
+            };
 }
 
         init();
