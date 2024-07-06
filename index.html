@@ -92,6 +92,9 @@
         </div>
         <div id="fireButton"></div>
     </div>
+    <div id="startMessage" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 24px; text-align: center; z-index: 100;">
+        Click anywhere to start the game
+    </div>
     <script>
     console.log("Script started");
 
@@ -103,13 +106,14 @@
     const gameOverElement = document.getElementById('gameOver');
     const mobileControls = document.getElementById('mobileControls');
 
+    let audioContext;
     const backgroundMusic = new Audio('background_music.mp3');
     backgroundMusic.loop = true;
     const shootSound = new Audio('shoot_sound.mp3');
     const explosionSound = new Audio('explosion_sound.mp3');
 
     const spacecraftImg = new Image();
-    spacecraftImg.src = 'spacecraft_n.png';
+    spacecraftImg.src = 'spacecraft.png';
     console.log("Attempting to load image from:", spacecraftImg.src);
 
     let assetsLoaded = 0;
@@ -142,6 +146,19 @@
         console.error("Error loading background music:", e);
         assetLoaded(); // Continue even if music fails to load
     };
+
+    function initAudio() {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaElementSource(backgroundMusic);
+        source.connect(audioContext.destination);
+    }
+
+    function playBackgroundMusic() {
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        backgroundMusic.play().catch(e => console.error("Error playing background music:", e));
+    }
 
     const sentences = [
         { korean: '마시멜로 과제를 해 보세요!', english: 'Try the Marshmallow Challenge!' },
@@ -189,7 +206,7 @@
     let fire = null;
     let lives = 5;
     let score = 0;
-    let gameRunning = true;
+    let gameRunning = false;
     let particles = [];
     let stars = [];
     let correctWords = [];
@@ -267,7 +284,7 @@
         sentenceElement.textContent = currentSentence.korean;
     }
 
-    function createWords() {
+function createWords() {
         const fontSize = isMobileDevice ? 28 : 20;
         ctx.font = `${fontSize}px Arial`;
         words = currentSentence.english.split(' ').map((word, index) => ({
@@ -283,7 +300,7 @@
         }));
     }
 
-function createStars() {
+    function createStars() {
         for (let i = 0; i < 100; i++) {
             stars.push({
                 x: Math.random() * canvasWidth,
@@ -535,12 +552,19 @@ function createStars() {
         updateLives();
         updateScore();
         
-        backgroundMusic.play().catch(e => console.error("Error playing music:", e));
+        document.addEventListener('click', startGame, { once: true });
         
         if (isMobileDevice) {
             mobileControls.style.display = 'block';
             setupMobileControls();
         }
+    }
+
+    function startGame() {
+        document.getElementById('startMessage').style.display = 'none';
+        initAudio();
+        playBackgroundMusic();
+        gameRunning = true;
         gameLoop();
     }
 
