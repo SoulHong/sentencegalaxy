@@ -402,7 +402,7 @@ function drawStars() {
         function shoot() {
             if (!gameRunning || fire) return;
             fire = { x: player.x + player.width / 2, y: player.y, width: 20, height: 40 };
-            shootSound.play();
+            shootSound.play().catch(e => console.error("Error playing shoot sound:", e));
         }
 
         function updateFire() {
@@ -429,7 +429,7 @@ function drawStars() {
                     score += 10;
                     updateScore();
                     createFirework(hitWord.x + hitWord.width / 2, hitWord.y + hitWord.height / 2, hitWord.color);
-                    explosionSound.play();
+                    explosionSound.play().catch(e => console.error("Error playing explosion sound:", e));
                     if (words.every(w => w.hit)) {
                         score += 50;
                         updateScore();
@@ -546,7 +546,6 @@ function drawStars() {
             updateScore();
 
             backgroundMusic.play().catch(e => console.error("Error playing music:", e));
-
             
             spacecraftImg.onload = () => {
                 console.log("Image loaded successfully");
