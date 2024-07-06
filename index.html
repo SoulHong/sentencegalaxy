@@ -111,13 +111,14 @@
     backgroundMusic.loop = true;
     const shootSound = new Audio('shoot_sound.mp3');
     const explosionSound = new Audio('explosion_sound.mp3');
+    const ouchSound = new Audio('ouch.mp3');
 
     const spacecraftImg = new Image();
     spacecraftImg.src = 'spacecraft_n.png';
     console.log("Attempting to load image from:", spacecraftImg.src);
 
     let assetsLoaded = 0;
-    const totalAssets = 2; // spacecraft image and background music
+    const totalAssets = 3; // spacecraft image and background music
 
     function assetLoaded() {
         assetsLoaded++;
@@ -147,10 +148,23 @@
         assetLoaded(); // Continue even if music fails to load
     };
 
+    ouchSound.oncanplaythrough = () => {
+    console.log("Ouch sound loaded");
+    assetLoaded();
+    };
+    
+    ouchSound.onerror = (e) => {
+        console.error("Error loading ouch sound:", e);
+        assetLoaded(); // Continue even if sound fails to load
+    };
+
     function initAudio() {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.createMediaElementSource(backgroundMusic);
-        source.connect(audioContext.destination);
+        const backgroundSource = audioContext.createMediaElementSource(backgroundMusic);
+        backgroundSource.connect(audioContext.destination);
+        
+        const ouchSource = audioContext.createMediaElementSource(ouchSound);
+        ouchSource.connect(audioContext.destination);
     }
 
     function playBackgroundMusic() {
@@ -393,6 +407,26 @@ function createWords() {
         shootSound.play().catch(e => console.error("Error playing shoot sound:", e));
     }
 
+    function checkCollision() {
+        words.forEach(word => {
+            if (!word.hit && 
+                player.x < word.x + word.width &&
+                player.x + player.width > word.x &&
+                player.y < word.y + word.height &&
+                player.y + player.height > word.y) {
+                lives--;
+                updateLives();
+                ouchSound.play().catch(e => console.error("Error playing ouch sound:", e));  // Add this line
+                if (lives === 0) {
+                    gameOver();
+                } else {
+                    player.x = canvasWidth / 2 - player.width / 2;
+                    player.y = canvasHeight - player.height - 10;
+                }
+            }
+        });
+    }
+        
     function updateFire() {
         if (!fire) return;
 
