@@ -112,8 +112,7 @@
     const shootSound = new Audio('shoot_sound.mp3');
     const explosionSound = new Audio('explosion_sound.mp3');
     let ouchSound;
-    ouchSound.preload = 'auto';
-
+        
     const spacecraftImg = new Image();
     spacecraftImg.src = 'spacecraft_n.png';
     console.log("Attempting to load image from:", spacecraftImg.src);
@@ -121,13 +120,24 @@
     let assetsLoaded = 0;
     const totalAssets = 3; // spacecraft image and background music
 
-    function assetLoaded() {
-        assetsLoaded++;
-        if (assetsLoaded === totalAssets) {
-            console.log("All assets loaded");
-            init();
-        }
+function assetLoaded() {
+    assetsLoaded++;
+    if (assetsLoaded === totalAssets) {
+        console.log("All assets loaded");
+        init().then(() => {
+            document.addEventListener('click', startGame, { once: true });
+        });
     }
+}
+
+    function loadSound() {
+    return new Promise((resolve, reject) => {
+        ouchSound = new Audio('ouch.mp3');
+        ouchSound.addEventListener('canplaythrough', () => resolve(ouchSound), false);
+        ouchSound.addEventListener('error', (e) => reject(e), false);
+        ouchSound.load();
+    });
+}
 
     spacecraftImg.onload = () => {
         console.log("Image loaded successfully");
@@ -567,31 +577,30 @@ function createWords() {
 
     window.addEventListener('resize', resizeCanvas);
 
-    async function init() {
-        resizeCanvas();
-        isMobileDevice = isMobile();
-        player.x = canvasWidth / 2 - player.width / 2;
-        player.y = canvasHeight - player.height - 10;
-        selectSentence();
-        createWords();
-        createStars();
-        updateLives();
-        updateScore();
-        
-        try {
-            await loadSound();
-            console.log("Ouch sound loaded successfully");
-        } catch (e) {
-            console.error("Failed to load ouch sound:", e);
-        }
-        
-        document.addEventListener('click', startGame, { once: true });
-        
-        if (isMobileDevice) {
-            mobileControls.style.display = 'block';
-            setupMobileControls();
-        }
+async function init() {
+    resizeCanvas();
+    isMobileDevice = isMobile();
+    player.x = canvasWidth / 2 - player.width / 2;
+    player.y = canvasHeight - player.height - 10;
+    selectSentence();
+    createWords();
+    createStars();
+    updateLives();
+    updateScore();
+    
+    try {
+        await loadSound();
+        console.log("Ouch sound loaded successfully");
+    } catch (e) {
+        console.error("Failed to load ouch sound:", e);
     }
+    
+    if (isMobileDevice) {
+        mobileControls.style.display = 'block';
+        setupMobileControls();
+    }
+    document.getElementById('startMessage').style.display = 'block';
+}
 
     function startGame() {
         document.getElementById('startMessage').style.display = 'none';
