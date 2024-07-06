@@ -112,6 +112,7 @@
     const shootSound = new Audio('shoot_sound.mp3');
     const explosionSound = new Audio('explosion_sound.mp3');
     const ouchSound = new Audio('ouch.mp3');
+    ouchSound.preload = 'auto';
 
     const spacecraftImg = new Image();
     spacecraftImg.src = 'spacecraft_n.png';
